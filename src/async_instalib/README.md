@@ -82,10 +82,12 @@ from async_instalib import Instagram
 
 session_file = Path.home() / ".local/share/async_instalib/account.session.json"
 
+
 async def main():
     async with Instagram.from_session_file(session_file) as instagram:
         me = await instagram.account.me()
         print(me.username)
+
 
 asyncio.run(main())
 ```
@@ -386,7 +388,14 @@ app. Publishing is visible to your audience; nothing is retried.
 import asyncio
 
 from async_instalib import (
-    CarouselItem, Instagram, Photo, PostOptions, ReelOptions, StoryOptions, UserTag, Video,
+    CarouselItem,
+    Instagram,
+    Photo,
+    PostOptions,
+    ReelOptions,
+    StoryOptions,
+    UserTag,
+    Video,
 )
 
 async with Instagram.from_session_file(session_file) as instagram:
@@ -394,19 +403,27 @@ async with Instagram.from_session_file(session_file) as instagram:
     place = (await instagram.posts.places.search("Mumbai")).items[0]
 
     photo = Photo.from_file("lake.jpg")
-    post = await instagram.posts.publish_photo(photo, PostOptions(
-        caption="Lake day", location=place, user_tags=(UserTag(me.id, 0.4, 0.6),),
-        alt_text="A blue lake between cliffs", hide_like_count=True,
-    ))
+    post = await instagram.posts.publish_photo(
+        photo,
+        PostOptions(
+            caption="Lake day",
+            location=place,
+            user_tags=(UserTag(me.id, 0.4, 0.6),),
+            alt_text="A blue lake between cliffs",
+            hide_like_count=True,
+        ),
+    )
 
     clip = Video.from_file("clip.mp4", cover=Photo.from_file("clip-first-frame.jpg"))
     album = await instagram.posts.publish_carousel(
         [CarouselItem(photo, alt_text="The lake"), clip], PostOptions(caption="Trip")
     )
-    reel = await instagram.posts.publish_reel(Video.from_file("reel.mp4"), ReelOptions(caption="Hi"))
+    reel = await instagram.posts.publish_reel(
+        Video.from_file("reel.mp4"), ReelOptions(caption="Hi")
+    )
     story = await instagram.posts.publish_story(photo, StoryOptions(close_friends=True))
 
-    while not album.completed:          # videos can stay PENDING while Instagram processes them
+    while not album.completed:  # videos can stay PENDING while Instagram processes them
         await asyncio.sleep(5)
         album = await instagram.posts.status(album.upload_id)
 ```
@@ -595,7 +612,7 @@ await direct.messages.edit(sent, "On my way, 5 min")
 await direct.messages.unsend(sent)
 
 for request in (await direct.requests()).items:
-    await direct.approve(request.id)        # or direct.hide(request.id) to decline
+    await direct.approve(request.id)  # or direct.hide(request.id) to decline
 ```
 
 `thread` is the numeric `Thread.id`. Message actions take the `Message` itself, because
@@ -673,7 +690,7 @@ async with Instagram.from_session_file(session_file) as instagram:
         async def noticed(event):
             print(event.type, event.actor.username, event.media_id, event.text)
 
-        await triggers.run()          # polls until the task is cancelled
+        await triggers.run()  # polls until the task is cancelled
 ```
 
 Or run it as a service from the command line, keeping the secret out of the arguments:
@@ -714,6 +731,7 @@ Each event is one JSON POST of `Event.to_dict()` with these headers:
 
 ```python
 import hashlib, hmac
+
 
 def verified(secret: bytes, headers, body: bytes) -> bool:
     signed = headers["X-Instalib-Timestamp"].encode() + b"." + body
