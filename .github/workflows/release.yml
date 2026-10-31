@@ -1,0 +1,83 @@
+name: Publish to PyPI
+on:
+  release:
+    types: [published]
+permissions:
+  contents: read
+concurrency:
+  group: pypi-${{ github.repository }}
+  cancel-in-progress: false
+jobs:
+  checks:
+    uses: ./.github/workflows/ci.yml
+  build:
+    needs: checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6
+        with:
+          python-version: '3.11'
+      - name: Validate release tag and source
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: |
+          git merge-base --is-ancestor HEAD origin/main
+          uv run --no-project python - <<'PYTHON'
+          import os, tomllib
+          from pathlib import Path
+          version = tomllib.loads(Path("pyproject.toml").read_text())["project"]["version"]
+          if os.environ["RELEASE_TAG"] != f"v{version}":
+              raise SystemExit(f"Release tag must be v{version}")
+          PYTHON
+      - run: uv build
+      - run: uvx twine check --strict dist/*
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: distributions
+          path: dist/*
+          if-no-files-found: error
+          retention-days: 7
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: pypi
+      url: https://pypi.org/p/async_instalib
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: distributions
+          path: dist/
+      - name: Verify any previously published files
+        run: |
+          python - <<'PYTHON'
+          import hashlib, json, urllib.error, urllib.request
+          from pathlib import Path
+          try:
+              with urllib.request.urlopen("https://pypi.org/pypi/async_instalib/json") as response:
+                  project = json.load(response)
+          except urllib.error.HTTPError as error:
+              if error.code != 404:
+                  raise
+              project = {"releases": {}}
+          published = {
+              item["filename"]: item["digests"]["sha256"]
+              for release in project["releases"].values() for item in release
+          }
+          for artifact in Path("dist").iterdir():
+              expected = published.get(artifact.name)
+              actual = hashlib.sha256(artifact.read_bytes()).hexdigest()
+              if expected is not None and expected != actual:
+                  raise SystemExit(f"Existing PyPI file differs: {artifact.name}")
+          PYTHON
+      - name: Publish distributions
+        uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086 # release/v1
+        with:
+          skip-existing: true

@@ -1,12 +1,13 @@
 <p align="center">
-  <img src="assets/banner.png" alt="async_instalib — Async Python for Instagram" width="100%">
+  <img src="https://raw.githubusercontent.com/Anandesh-Sharma/async_instalib/main/assets/banner.png" alt="async_instalib — Async Python for Instagram" width="100%">
 </p>
 
 # async_instalib
 
 [![CI](https://github.com/Anandesh-Sharma/async_instalib/actions/workflows/ci.yml/badge.svg)](https://github.com/Anandesh-Sharma/async_instalib/actions/workflows/ci.yml)
+[![PyPI](https://img.shields.io/pypi/v/async_instalib?color=111111)](https://pypi.org/project/async_instalib/)
 ![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-111111?logo=python&logoColor=white)
-[![MIT license](https://img.shields.io/badge/license-MIT-111111)](LICENSE)
+[![MIT license](https://img.shields.io/badge/license-MIT-111111)](https://github.com/Anandesh-Sharma/async_instalib/blob/main/LICENSE)
 ![Typed](https://img.shields.io/badge/typing-PEP%20561-111111)
 
 An async Python client for Instagram's private Android API. It covers password
@@ -43,10 +44,10 @@ Saved-session ownership uses POSIX file locks; use macOS or Linux.
 
 ## Install
 
-Requires Python 3.11 or newer. Install directly from GitHub:
+Requires Python 3.11 or newer. Install from PyPI:
 
 ```sh
-pip install "git+https://github.com/Anandesh-Sharma/async_instalib.git"
+pip install async_instalib
 ```
 
 For development and the `uv run` examples below:
@@ -57,8 +58,7 @@ cd async_instalib
 uv sync --locked
 ```
 
-The package has not been published to PyPI. For reproducible deployments, pin the
-Git URL to a reviewed commit: `git+https://github.com/Anandesh-Sharma/async_instalib.git@<commit-sha>`.
+For reproducible deployments, pin a PyPI version or install a reviewed Git commit: `git+https://github.com/Anandesh-Sharma/async_instalib.git@<commit-sha>`.
 
 ## Sign in
 
@@ -139,7 +139,7 @@ async with Instagram.from_session_file(session_file) as instagram:
     relationship = await instagram.people.relationships.get(profile.id)
 ```
 
-[`examples/people.py`](examples/people.py) is a runnable read-only example. Its
+[`examples/people.py`](https://github.com/Anandesh-Sharma/async_instalib/blob/main/examples/people.py) is a runnable read-only example. Its
 default operation resolves a username and reads that profile. Additional reads
 are explicit flags:
 
@@ -421,7 +421,7 @@ async with Instagram.from_session_file(session_file) as instagram:
 
 Every publish returns a `Publication`: the post `id`, `upload_id`, `status`
 (`COMPLETED` or `PENDING`), the published `media` (a `Media`), and a carousel's
-`children`. [`examples/posts.py`](examples/posts.py) publishes one photo, reel, or
+`children`. [`examples/posts.py`](https://github.com/Anandesh-Sharma/async_instalib/blob/main/examples/posts.py) publishes one photo, reel, or
 story from the command line and can delete it again with `--delete`.
 
 | Operation under `instagram.posts` | Request and behavior |
@@ -869,7 +869,7 @@ No request frequency or header preset in this library is certified as safe.
 
 All supported operating parameters are constructor arguments on typed dataclasses.
 Use `dataclasses.replace(settings, field=value)` to derive another configuration.
-See [the runnable example](examples/configured_client.py) for a complete client setup.
+See [the runnable example](https://github.com/Anandesh-Sharma/async_instalib/blob/main/examples/configured_client.py) for a complete client setup.
 
 | Object | Parameters | Defaults / meaning |
 | --- | --- | --- |
@@ -1162,4 +1162,22 @@ session files, raw captures and real account data out of issues and pull request
 
 ## License
 
-[MIT](LICENSE) © 2026 Anandesh Sharma.
+[MIT](https://github.com/Anandesh-Sharma/async_instalib/blob/main/LICENSE) © 2026 Anandesh Sharma.
+
+## Releases
+
+Publishing a GitHub release runs the complete CI matrix, builds a wheel and source
+archive, validates package metadata, and uploads both to PyPI with
+[trusted publishing](https://docs.pypi.org/trusted-publishers/). No stored PyPI token
+is needed. The publisher is bound to `Anandesh-Sharma/async_instalib`, `release.yml`, and
+the GitHub environment `pypi`.
+
+1. Update `project.version` in `pyproject.toml`, run `uv lock`, and commit to `main`.
+2. Publish a GitHub release with the matching tag `v<version>` from that commit.
+3. Check the [publishing workflow](https://github.com/Anandesh-Sharma/async_instalib/actions/workflows/release.yml) and
+   [PyPI project](https://pypi.org/project/async_instalib/).
+
+Tags must match the package version exactly and point to a commit on `main`.
+A draft release does not publish. A published prerelease does; use a matching
+PEP 440 prerelease version such as `0.3.0rc1`. Re-running a release skips files
+already present only after checking their SHA-256 hashes match the build.
